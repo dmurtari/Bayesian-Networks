@@ -1,4 +1,5 @@
 import sys
+import getopt
 import numpy
 from pbnt.Inference import *
 
@@ -84,8 +85,53 @@ def generateModel():
     # Create bayes net
     return BayesNet(nodes)
 
+def parseArgs(args):
+    false = []
+    true = []
+    to_return = []
+
+    negate = False
+    for arg in args:
+        if arg.isupper():
+            to_return.append(arg)
+        if arg == '~':
+            negate = True
+        elif arg in 'pscdx':
+            if negate:
+                false.append(arg)
+                negate = False
+            else:
+                true.append(arg)
+
+    return (to_return, true, false)
+
 def main():
     bayes = generateModel()
+    options = getopt.getopt(sys.argv[1:], "g:j:m:")[0]
+
+    if not options:
+        print "Need arguments to calculate probabilities"
+        sys.exit()
+
+    option = options[0][0]
+    args = options[0][1]
+
+    args = parseArgs(args)
+    print args
+
+    for node in bayes.nodes:
+        if node.id == 0:
+            pollution = node
+        if node.id == 1:
+            smoker = node
+        if node.id == 2:
+            cancer = node
+        if node.id == 3:
+            xray = node
+        if node.id == 4:
+            dyspnoea = node
+
+    engine = JunctionTreeEngine(bayes)
 
 if __name__ == "__main__":
     main()
