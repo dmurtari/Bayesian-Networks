@@ -105,19 +105,7 @@ def parseArgs(args):
 
     return (to_return, true, false)
 
-def main():
-    bayes = generateModel()
-    options = getopt.getopt(sys.argv[1:], "g:j:m:")[0]
-
-    if not options:
-        print "Need arguments to calculate probabilities"
-        sys.exit()
-
-    option = options[0][0]
-    args = options[0][1]
-
-    args = parseArgs(args)
-    print args
+def marginalDistribution(bayes, engine, to_return, true_or_low, false_or_high):
 
     for node in bayes.nodes:
         if node.id == 0:
@@ -131,7 +119,60 @@ def main():
         if node.id == 4:
             dyspnoea = node
 
+    for evidence in true_or_low:
+        if evidence == "p":
+            engine.evidence[pollution] = True
+        if evidence == "s":
+            engine.evidence[smoker] = True
+        if evidence == "c":
+            engine.evidence[cancer] = True
+        if evidence == "d":
+            engine.evidence[dyspnoea] = True
+        if evidence == "x":
+            engine.evidence[xray] = True
+
+    for evidence in false_or_high:
+        if evidence == "p":
+            engine.evidence[pollution] = False
+        if evidence == "s":
+            engine.evidence[smoker] = False
+        if evidence == "c":
+            engine.evidence[cancer] = False
+        if evidence == "d":
+            engine.evidence[dyspnoea] = False
+        if evidence == "x":
+            engine.evidence[xray] = False   
+
+    for returns in to_return:
+        if returns == "P":
+            Q = engine.marginal(pollution)[0]
+        if returns == "S":
+            Q = engine.marginal(smoker)[0]
+        if returns == "C":
+            Q = engine.marginal(cancer)[0]
+        if returns == "D":
+            Q = engine.marginal(dyspnoea)[0]
+        if returns == "X":
+            Q = engine.marginal(xray)[0]
+
+        index = Q.generate_index([False], range(Q.nDims))
+        print "Marginal distribution is: ", Q[index]
+
+def main():
+    bayes = generateModel()
+    options = getopt.getopt(sys.argv[1:], "g:j:m:")[0]
+
+    if not options:
+        print "Need arguments to calculate probabilities"
+        sys.exit()
+
+    option = options[0][0]
+    args = options[0][1]
     engine = JunctionTreeEngine(bayes)
+    to_return, true_or_low, false_or_high = parseArgs(args)
+
+    if option == '-m':
+        marginalDistribution(bayes, engine, to_return, true_or_low, false_or_high)
 
 if __name__ == "__main__":
     main()
