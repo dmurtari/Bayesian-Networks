@@ -158,6 +158,67 @@ def marginalDistribution(bayes, engine, to_return, true_or_low, false_or_high):
         index = Q.generate_index([False], range(Q.nDims))
         print "Marginal distribution is: ", Q[index]
 
+def conditionalProbability(bayes, engine, conditional, true_or_low, false_or_high):
+    for node in bayes.nodes:
+        if node.id == 0:
+            pollution = node
+        if node.id == 1:
+            smoker = node
+        if node.id == 2:
+            cancer = node
+        if node.id == 3:
+            xray = node
+        if node.id == 4:
+            dyspnoea = node
+
+    for evidence in true_or_low:
+        if evidence == "p":
+            engine.evidence[pollution] = True
+        if evidence == "s":
+            engine.evidence[smoker] = True
+        if evidence == "c":
+            engine.evidence[cancer] = True
+        if evidence == "d":
+            engine.evidence[dyspnoea] = True
+        if evidence == "x":
+            engine.evidence[xray] = True
+
+    for evidence in false_or_high:
+        if evidence == "p":
+            engine.evidence[pollution] = False
+        if evidence == "s":
+            engine.evidence[smoker] = False
+        if evidence == "c":
+            engine.evidence[cancer] = False
+        if evidence == "d":
+            engine.evidence[dyspnoea] = False
+        if evidence == "x":
+            engine.evidence[xray] = False   
+
+    if conditional[0] == '~':
+        index = False
+        condition = conditional[1]
+    else:
+        index = True
+        condition = conditional[0]
+
+    if condition is 'p':
+        condition = pollution
+    if condition is 's':
+        condition = smoker
+    if condition is 'c':
+        condition = cancer
+    if condition is 'd':
+        condition = dyspnoea
+    if condition is 'x':
+        condition = xray
+
+    Q = engine.marginal(condition)[0]
+    index = Q.generate_index([index], range(Q.nDims))
+    print "Conditonal Probability is: ", index
+    return index
+
+
 def main():
     bayes = generateModel()
     options = getopt.getopt(sys.argv[1:], "g:j:m:")[0]
@@ -169,10 +230,15 @@ def main():
     option = options[0][0]
     args = options[0][1]
     engine = JunctionTreeEngine(bayes)
-    to_return, true_or_low, false_or_high = parseArgs(args)
 
     if option == '-m':
+        to_return, true_or_low, false_or_high = parseArgs(args)
         marginalDistribution(bayes, engine, to_return, true_or_low, false_or_high)
+    if option == '-g':
+        conditional, given = args.split('|')
+        to_return, true_or_low, false_or_high = parseArgs(given)
+        conditionalProbability(bayes, engine, conditional, true_or_low, false_or_high)
+
 
 if __name__ == "__main__":
     main()
