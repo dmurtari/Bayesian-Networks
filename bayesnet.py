@@ -106,8 +106,7 @@ def parseArgs(args):
 
     return (to_return, true, false)
 
-def marginalDistribution(bayes, engine, to_return, true_or_low, false_or_high):
-
+def marginalDistribution(bayes, engine, to_return, true_or_low, false_or_high, tf = False):
     for node in bayes.nodes:
         if node.id == 0:
             pollution = node
@@ -156,9 +155,15 @@ def marginalDistribution(bayes, engine, to_return, true_or_low, false_or_high):
         if returns == "X":
             Q = engine.marginal(xray)[0]
 
-        index = Q.generate_index([False], range(Q.nDims))
-        print "t =", 1 - Q[index]
-        print "f =", Q[index]
+        index = Q.generate_index([tf], range(Q.nDims))
+
+        if not tf:
+            print "t =", 1 - Q[index]
+            print "f =", Q[index]
+        if tf:
+            print "t =", Q[index]
+            print "f =", 1 - Q[index]
+
         return Q[index]
 
 def conditionalProbability(bayes, engine, conditional, true_or_low, false_or_high):
@@ -218,14 +223,41 @@ def conditionalProbability(bayes, engine, conditional, true_or_low, false_or_hig
     if condition is 'x':
         condition = xray
 
-    print index
-    print condition.name
-
     Q = engine.marginal(condition)[0]
     index = Q.generate_index([index], range(Q.nDims))
-    print "Conditonal Probability is: ", Q[index]
+    print Q[index]
     return Q[index]
 
+def jointDistribution(bayes, engine, true_or_low, false_or_high):
+    probability = 1
+    if not len(true_or_low) == 0:
+        probability *= jointDriver(bayes, engine, true_or_low, false_or_high, true_or_low, false_or_high)
+    if not len(false_or_high) == 0:
+        probability *= jointDriver(bayes, engine, [], false_or_high, true_or_low, false_or_high)
+
+    print "joint probability", probability
+
+
+def jointDriver(bayes, engine, true_or_low, false_or_high, rt, rf):
+    
+    if not len(true_or_low) == 0:
+        if len(true_or_low) == 1:
+            return marginalDistribution(bayes, engine, true_or_low[0].upper(), rt, rf, True)
+        if len(true_or_low) == 2:
+            return marginalDistribution(bayes, engine, true_or_low[0].upper(), rt, rf, True) *\
+                   marginalDistribution(bayes, engine, true_or_low[1].upper(), rt, rf, True) 
+        else:
+            return jointDriver(bayes, engine, true_or_low[1:], false_or_high, rt, rf) * \
+                   conditionalProbability(bayes, engine, true_or_low[0], true_or_low[1:], [])
+    elif not len(false_or_high) == 0:
+        if len(false_or_high) == 1:
+            return marginalDistribution(bayes, engine, false_or_high[0].upper(), rt, rf)
+        if len(false_or_high) == 2:
+            return marginalDistribution(bayes, engine, false_or_high[0].upper(), rt, rf) *\
+                   marginalDistribution(bayes, engine, false_or_high[1].upper(), rt, rf)
+        else:
+            return jointDriver(bayes, engine, [], false_or_high[1:], rt, rf) * \
+                   conditionalProbability(bayes, engine, false_or_high[0], [], false_or_high[1:])
 
 def main():
     bayes = generateModel()
@@ -246,6 +278,9 @@ def main():
         conditional, given = args.split('|')
         to_return, true_or_low, false_or_high = parseArgs(given)
         conditionalProbability(bayes, engine, conditional, true_or_low, false_or_high)
+    if option == '-j':
+        to_return, true_or_low, false_or_high = parseArgs(args)
+        jointDistribution(bayes, engine, true_or_low, false_or_high)
 
 
 if __name__ == "__main__":
