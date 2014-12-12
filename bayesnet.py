@@ -3,6 +3,7 @@ import getopt
 import numpy
 from pbnt.Inference import *
 
+
 def generateModel():
     """Generate the disease model provided in the writeup
     """
@@ -156,9 +157,12 @@ def marginalDistribution(bayes, engine, to_return, true_or_low, false_or_high):
             Q = engine.marginal(xray)[0]
 
         index = Q.generate_index([False], range(Q.nDims))
-        print "Marginal distribution is: ", Q[index]
+        print "t =", 1 - Q[index]
+        print "f =", Q[index]
+        return Q[index]
 
 def conditionalProbability(bayes, engine, conditional, true_or_low, false_or_high):
+    
     for node in bayes.nodes:
         if node.id == 0:
             pollution = node
@@ -202,6 +206,7 @@ def conditionalProbability(bayes, engine, conditional, true_or_low, false_or_hig
         index = True
         condition = conditional[0]
 
+
     if condition is 'p':
         condition = pollution
     if condition is 's':
@@ -213,10 +218,13 @@ def conditionalProbability(bayes, engine, conditional, true_or_low, false_or_hig
     if condition is 'x':
         condition = xray
 
+    print index
+    print condition.name
+
     Q = engine.marginal(condition)[0]
     index = Q.generate_index([index], range(Q.nDims))
-    print "Conditonal Probability is: ", index
-    return index
+    print "Conditonal Probability is: ", Q[index]
+    return Q[index]
 
 
 def main():
